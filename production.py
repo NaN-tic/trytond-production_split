@@ -76,7 +76,7 @@ class Production:
         while ((remainder - quantity) >= uom.rounding  # remainder > quantity
                 and (count or count is None)):
             productions.append(self._split_production(
-                    '%s-%s' % (code, suffix), quantity, uom, input2qty,
+                    '%s-%02d' % (code, suffix), quantity, uom, input2qty,
                     output2qty))
             remainder -= quantity
             if count:
@@ -86,10 +86,10 @@ class Production:
         assert remainder > uom.rounding
         # The initial production contains the remaining quantity
         productions.append(self._split_production(
-                '%s-%s' % (code, suffix), quantity, uom, input2qty,
+                '%s-%02d' % (code, suffix), quantity, uom, input2qty,
                 output2qty))
         self.write([self], {
-                'code': '%s-%s' % (code, suffix + 1),
+                'code': '%s-%02d' % (code, suffix + 1),
                 'quantity': remainder,
                 'uom': uom.id,
                 'state': state,
