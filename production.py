@@ -156,7 +156,8 @@ class Production:
                     })
             new_moves.append(new_move)
             to_write.extend(([move], {
-                        'quantity': move.quantity - new_move_qty,
+                        'quantity': Uom.round(move.quantity - new_move_qty,
+                            move.uom.rounding),
                         }))
             if move.state != 'draft':
                 to_draft.append(move)
