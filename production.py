@@ -1,10 +1,13 @@
 # This file is part of Tryton.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
+from decimal import Decimal
 from trytond.model import ModelView, fields
 from trytond.wizard import Wizard, StateView, StateTransition, Button
 from trytond.pyson import Eval
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
+from trytond.i18n import gettext
+from trytond.exceptions import UserError
 
 __all__ = ['Production', 'SplitProductionStart', 'SplitProduction']
 
@@ -125,6 +128,7 @@ class Production(metaclass=PoolMeta):
         product2pending_qty = product2qty.copy()
         to_draft, to_write, reset_state, new_moves = [], [], [], []
         for move in current_moves:
+            digits = move.on_change_with_unit_digits()
             pending_qty = Uom.compute_qty(
                 move.product.default_uom, product2pending_qty[move.product.id],
                 move.uom,
@@ -155,8 +159,9 @@ class Production(metaclass=PoolMeta):
                     })
             new_moves.append(new_move)
             to_write.extend(([move], {
-                        'quantity': move.quantity - new_move_qty,
-                        }))
+                    'quantity': Decimal(move.quantity - new_move_qty).quantize(
+                        Decimal(str(10 ** -digits))),
+                    }))
             if move.state != 'draft':
                 to_draft.append(move)
                 reset_state.extend(
@@ -205,7 +210,6 @@ class SplitProduction(Wizard):
             Button('Split', 'split', 'tryton-ok', default=True),
             ])
     split = StateTransition()
-
 
     def default_start(self, fields):
         pool = Pool()
