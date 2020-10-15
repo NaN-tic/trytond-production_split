@@ -1,6 +1,5 @@
 # This file is part of Tryton.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-from decimal import Decimal
 from trytond.model import ModelView, fields
 from trytond.wizard import Wizard, StateView, StateTransition, Button
 from trytond.pyson import Eval
@@ -92,7 +91,7 @@ class Production(metaclass=PoolMeta):
                 output2qty))
         self.write([self], {
                 'number': '%s-%02d' % (number, 1),
-                'quantity': remainder,
+                'quantity': uom.round(remainder),
                 'uom': uom.id,
                 'state': state,
                 })
@@ -128,7 +127,6 @@ class Production(metaclass=PoolMeta):
         product2pending_qty = product2qty.copy()
         to_draft, to_write, reset_state, new_moves = [], [], [], []
         for move in current_moves:
-            digits = move.on_change_with_unit_digits()
             pending_qty = Uom.compute_qty(
                 move.product.default_uom, product2pending_qty[move.product.id],
                 move.uom,
@@ -159,8 +157,7 @@ class Production(metaclass=PoolMeta):
                     })
             new_moves.append(new_move)
             to_write.extend(([move], {
-                    'quantity': Decimal(move.quantity - new_move_qty).quantize(
-                        Decimal(str(10 ** -digits))),
+                    'quantity': move.uom.round(move.quantity - new_move_qty),
                     }))
             if move.state != 'draft':
                 to_draft.append(move)
